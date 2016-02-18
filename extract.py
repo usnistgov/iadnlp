@@ -3,13 +3,14 @@
 import docx
 import docx.enum.text
 import argparse
-import os,os.path
+import os, os.path
+
 
 def process(fname):
     if os.path.basename(fname).startswith("~") or not fname.endswith(".docx"):
         return
     d = docx.Document(fname)
-    assert d.tables[0].rows[0].cells[0].text=='Date:'
+    assert d.tables[0].rows[0].cells[0].text == 'Date:'
     date = d.tables[0].rows[0].cells[1].text
     print("{} {}".format(os.path.basename(fname),date),end='   ')
     speakers = {}
