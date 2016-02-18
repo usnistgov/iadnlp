@@ -1,9 +1,11 @@
 #!/usr/bin/env python3.5
 
+import argparse
+import os
+import os.path
+
 import docx
 import docx.enum.text
-import argparse
-import os, os.path
 
 
 def process(fname):
@@ -28,20 +30,35 @@ def process(fname):
             continue
         errors.append("** unknown c0: {}  c1: {}".format(c0,c1))
     counts = []
+    text_per_speaker = []
+    qcount_per_speaker = []
     for (speaker,text) in speakers.items():
         fulltext = "".join(text)
         qcount = fulltext.count('?')
         print("{}: {} ({}?)   ".format(speaker,len(fulltext),qcount),end=' ')
-        counts.append((qcount,speaker))
-    print("")
+        text_per_speaker.append((len(fulltext), speaker))
+        qcount_per_speaker.append((qcount, speaker))
+    # max_text   = max(text_per_speaker)[1]
+    # Right now, assume the respondent is the person who answered the most questions
+    min_qcount = min(qcount_per_speaker)[1]
+    # assert max_text == min_qcount
+    # print("")
     print("\n".join(errors))
     print("")
+    respondent = min_qcount
+    # Create the transcript with the most text
+    with open("transcripts/" + os.path.splitext(os.path.basename(fname))[0], "w") as f:
+        f.write("\n".join(speakers[respondent]))
 
 
 
 
 
 if __name__=="__main__":
+    try:
+        os.mkdir("transcripts")
+    except FileExistsError:
+        pass
     parser = argparse.ArgumentParser("Analyze DOCX transcript files from TranscribeMe!")
     parser.add_argument("files",help="Files or directories to analyze",nargs="+")
     args = parser.parse_args()
