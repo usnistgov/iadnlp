@@ -7,20 +7,32 @@ import os.path
 import docx
 import docx.enum.text
 
+overrides = {}
+clean = True
 
 def process(fname):
-    if os.path.basename(fname).startswith("~") or not fname.endswith(".docx"):
+    """Process file fname.docx and create a transcript file fname.txt that has just the text of
+    the respondent. The respondent is determined by linguistic analysis---it's the person who said
+    the most, unless there is an overrride."""
+
+    # Remove trans filenames
+    fbase = os.path.basename(fname)
+    if fbase.startswith("~") or not fname.endswith(".docx"):
         return
-    if "/NOTES/" in fname:
+    if "NOTES" in fname.upper():
         return
-    transcript_fname = "transcripts/" + os.path.splitext(os.path.basename(fname))[0]+".txt"
-    if os.path.exists(transcript_fname):
+    transcript_fname = fname.replace(".docx", ".txt")
+    # don't create a transcript that already exists...
+    if os.path.exists(transcript_fname) and os.path.getsize(transcript_fname) > 0 and not clean:
         return
     print(fname)
     d = docx.Document(fname)
+    # Make sure transcript file is properly encoded
     assert d.tables[0].rows[0].cells[0].text == 'Date:'
     date = d.tables[0].rows[0].cells[1].text
     print("{} {}".format(os.path.basename(fname),date),end='   ')
+
+    # Remember output for each speaker.
     speakers = {}
     errors = []
     for table in d.tables[1:]:
@@ -39,30 +51,19 @@ def process(fname):
             if c1=='[silence]':
                 continue
             errors.append("** unknown c0: {}  c1: {}".format(c0,c1))
-    counts = []
-    text_per_speaker = []
-    qcount_per_speaker = []
-    for (speaker,text) in speakers.items():
-        fulltext = "".join(text)
-        qcount = fulltext.count('?')
-        print("{}: {} ({}?)   ".format(speaker,len(fulltext),qcount),end=' ')
-        text_per_speaker.append((len(fulltext), speaker))
-        qcount_per_speaker.append((qcount, speaker))
-    # max_text   = max(text_per_speaker)[1]
-    # Right now, assume the respondent is the person who answered the most questions
-    min_qcount = min(qcount_per_speaker)[1]
-    # assert max_text == min_qcount
-    # print("")
-    print("\n".join(errors))
-    print("")
-    respondent = min_qcount
-    # Create the transcript with the most text
+
+    # After examining several approaches for distinguishing the respondent
+    # (vocab, # of question marks, etc),
+    # we decided to go with the longest characters.
+
+    if fbase in overrides:
+        respondent = overrides[fbase]
+        rtext = "\n".join(speakers[respondent])
+    else:
+        text_per_speaker = ["\n".join(speakers[speaker]) for speaker in speakers.keys()]
+        (length, rtext) = max([(len(text), text) for text in text_per_speaker])
     with open(transcript_fname, "w") as f:
-        f.write("\n".join(speakers[respondent]))
-
-
-
-
+        f.write(rtext)
 
 if __name__=="__main__":
     try:
