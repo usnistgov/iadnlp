@@ -11,24 +11,34 @@ import docx.enum.text
 def process(fname):
     if os.path.basename(fname).startswith("~") or not fname.endswith(".docx"):
         return
+    if "/NOTES/" in fname:
+        return
+    transcript_fname = "transcripts/" + os.path.splitext(os.path.basename(fname))[0]+".txt"
+    if os.path.exists(transcript_fname):
+        return
+    print(fname)
     d = docx.Document(fname)
     assert d.tables[0].rows[0].cells[0].text == 'Date:'
     date = d.tables[0].rows[0].cells[1].text
     print("{} {}".format(os.path.basename(fname),date),end='   ')
     speakers = {}
     errors = []
-    for row in d.tables[1].rows:
-        c0 = row.cells[0].text
-        c1 = row.cells[1].text
-        speaker = c0[0:2]
-        when    = c0[4:]
-        if speaker:
-            if speaker not in speakers: speakers[speaker] = []
-            speakers[speaker].append(c1)
-            continue
-        if c1=='[silence]':
-            continue
-        errors.append("** unknown c0: {}  c1: {}".format(c0,c1))
+    for table in d.tables[1:]:
+        for row in table.rows:
+            try:
+                c0 = row.cells[0].text
+                c1 = row.cells[1].text
+            except IndexError:
+                continue
+            speaker = c0[0:2]
+            when    = c0[4:]
+            if speaker:
+                if speaker not in speakers: speakers[speaker] = []
+                speakers[speaker].append(c1)
+                continue
+            if c1=='[silence]':
+                continue
+            errors.append("** unknown c0: {}  c1: {}".format(c0,c1))
     counts = []
     text_per_speaker = []
     qcount_per_speaker = []
@@ -47,7 +57,7 @@ def process(fname):
     print("")
     respondent = min_qcount
     # Create the transcript with the most text
-    with open("transcripts/" + os.path.splitext(os.path.basename(fname))[0], "w") as f:
+    with open(transcript_fname, "w") as f:
         f.write("\n".join(speakers[respondent]))
 
 
