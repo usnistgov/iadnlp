@@ -9,13 +9,26 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 
+ALL_EXPERTS = glob.glob("transcripts/*Expert/*.txt")
+NIST_EXPERTS = glob.glob("transcripts/NIST Expert*/*.txt")
+NON_NIST_EXPERTS = glob.glob("transcripts/M*Expert*/*.txt")
+GENERAL = glob.glob("transcripts/*General*/*.txt")
+
+TRANSCRIPTS = {"expert_all": ALL_EXPERTS,
+               "expert_nist": NIST_EXPERTS,
+               "expert_non-nist": NON_NIST_EXPERTS,
+               "general": GENERAL
+               }
+
 
 def process(outfile, infiles):
     """
 Process a set of transcript files and generate both wordcloud and the linguistic top-N
     :rtype: None
     """
-    print("\n".join(infiles))
+    print("Create {} from:")
+    for line in infiles:
+        print("     {}".format(line))
     assert len(infiles) > 0
     text = [open(fname).read() for fname in infiles]
     fulltext = "\n".join(text)
@@ -29,11 +42,6 @@ Process a set of transcript files and generate both wordcloud and the linguistic
         for word in docwords:
             doccounts[word] += 1
         words.union(docwords)
-
-    # Now rank each word by TF/IDF
-    for word in words:
-        print(word, doccounts[word] / wordcounts[word])
-    exit(0)
 
     wc = WordCloud(width=1024, height=640)
     wc.generate_from_text(fulltext)
@@ -49,7 +57,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # Get the text from the input files
 
-    process("expert.png", glob.glob("transcripts/*Expert*/*.txt"))
-    process("expert_nist.png", glob.glob("transcripts/NIST Expert*/*.txt"))
-    process("expert_marsh.png", glob.glob("transcripts/*Marsh*Expert*/*.txt"))
-    process("genearl.png", glob.glob("transcripts/*General*/*.txt"))
+    for (label, files) in TRANSCRIPTS.items():
+        process(label + ".png", files)
