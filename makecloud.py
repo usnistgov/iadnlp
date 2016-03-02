@@ -21,6 +21,17 @@ TRANSCRIPTS = {"expert_all": ALL_EXPERTS,
                }
 
 
+def cloud_for_document(outfile=None, fulltext=None):
+    """Create a wordcloud for the DOCUMENT and save the result in OUTFILE"""
+    assert outfile != None
+    assert fulltext != None
+    wc = WordCloud(width=1024, height=640)
+    wc.generate_from_text(fulltext)
+    plt.imshow(wc)
+    plt.axis("off")
+    plt.savefig(outfile, dpi=300)
+
+
 def process(outfile, infiles):
     """
 Process a set of transcript files and generate both wordcloud and the linguistic top-N
@@ -43,11 +54,8 @@ Process a set of transcript files and generate both wordcloud and the linguistic
             doccounts[word] += 1
         words.union(docwords)
 
-    wc = WordCloud(width=1024, height=640)
-    wc.generate_from_text(fulltext)
-    plt.imshow(wc)
-    plt.axis("off")
-    plt.savefig(outfile, dpi=300)
+    cloud_for_document(outfile, fulltext)
+
 
 
 if __name__ == "__main__":

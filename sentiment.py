@@ -37,12 +37,13 @@ if __name__ == "__main__":
         sentiment_bag.add(st.stem(word))  # I like this one the best
 
     # Process all the lists
-    for (label, files) in makecloud.TRANSCRIPTS.items():
+    for (label, files) in sorted(makecloud.TRANSCRIPTS.items()):
         scores = []
         print("{}:\n{}=".format(label, "=" * len(label)))
+        target_words = []
 
-        scount = 0
         for fname in files:
+            scount = 0
             raw = open(fname, "r").read().lower()
             tokens = word_tokenize(raw)
             tokens = mwe_tokenizer.tokenize(tokens)
@@ -52,9 +53,10 @@ if __name__ == "__main__":
                 if t in sentiment_bag:
                     bar += "*"
                     scount += 1
-                    # print(t," ",end="")
+                    target_words.append(t)
             score = scount / len(tokens)
-            print("{:35s}  {:3.6f} {}".format(os.path.basename(fname), score, bar))
+            print("{:35s}  {:3.6f} {:4} {}".format(os.path.basename(fname), score, scount, bar))
             scores.append(score)
-        print("\n{} Average Score: {:3.6f}".format(str.capitalize(label), sum(scores) / len(scores)))
+        print("\n{} Average Score of {}: {:3.6f}".format(str.capitalize(label), len(scores), sum(scores) / len(scores)))
         print("\n\n")
+        makecloud.cloud_for_document(outfile=label + ".png", fulltext=" ".join(target_words))

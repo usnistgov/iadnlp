@@ -9,7 +9,7 @@ def process(fname):
     bbl_counter = 1
     while len(data) > 0:
         print("len(data)={}".format(len(data)))
-        loc = data.find('\\footnote{')
+        loc = data.find("\\footnote{")
         if loc == -1:
             break
         # Write up to the \footnote
@@ -37,5 +37,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Turn footnotes into cites and bibitems.")
     parser.add_argument("files", help="Files or directories to analyze", nargs="+")
     args = parser.parse_args()
+
     for fname in args.files:
         process(fname)
