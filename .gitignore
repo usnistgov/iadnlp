@@ -63,3 +63,6 @@ target/
 data.pdf
 transcripts
 *.pdf
+*~
+.DS_Store
+*.png

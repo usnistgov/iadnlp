@@ -33,10 +33,6 @@ def process(fname):
         return
     transcript_fname = fname.replace(".docx", ".txt")
 
-    if fbase in overrides:
-        print("{} is an overrride".format(fbase))
-        os.unlink(transcript_fname)
-
     # don't create a transcript that already exists...
     transcript_exists = os.path.exists(transcript_fname) and os.path.getsize(transcript_fname) > 0 
     if transcript_exists and (not args.force) and (not args.stats):
@@ -62,6 +58,10 @@ def process(fname):
                     continue
         return max(times)
             
+
+    if fbase in overrides:
+        print("{} is an overrride".format(fbase))
+        os.unlink(transcript_fname)
 
     if cache and transcript_exists:
         return
@@ -135,11 +135,10 @@ if __name__=="__main__":
                 print(seconds)
                 if seconds:
                     times.append(seconds)
-            print(times)
             print("   mean: {}  median: {}  stddev: {}".
-                  format(statistics.mean(times),statistics.median(times),statistics.stdev(times)))
+                  format(statistics.mean(times)//1,statistics.median(times)//1,statistics.stdev(times)//1))
             mean = int(statistics.mean(times))
-            print("   mean: {}:{}".format(mean%60,mean//60))
+            print("   mean: {}:{:02}".format(mean//60,mean%60))
         exit(0)
 
             
