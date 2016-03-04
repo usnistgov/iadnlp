@@ -6,6 +6,8 @@ import os.path
 
 import docx
 import docx.enum.text
+import makecloud
+import statistics
 
 # overrides specifies the respondent for each named interview
 
@@ -36,14 +38,33 @@ def process(fname):
         os.unlink(transcript_fname)
 
     # don't create a transcript that already exists...
-    if cache and os.path.exists(transcript_fname) and (os.path.getsize(transcript_fname) > 0):
+    transcript_exists = os.path.exists(transcript_fname) and os.path.getsize(transcript_fname) > 0 
+    if transcript_exists and (not args.force) and (not args.stats):
         return
-    print(fname)
+
     d = docx.Document(fname)
     # Make sure transcript file is properly encoded
     assert d.tables[0].rows[0].cells[0].text == 'Date:'
     date = d.tables[0].rows[0].cells[1].text
-    print("{} {}".format(os.path.basename(fname),date),end='   ')
+    print("{} ({}) ".format(os.path.basename(fname),date),end='   ')
+
+    # Compute stats?
+    if args.stats:
+        times = []
+        for table in d.tables[1:]:
+            for row in table.rows:
+                try:
+                    c0 = row.cells[0].text
+                    if c0[0]=='S' and c0[2]==' ' and c0[5]==':':
+                        time = c0[3:8]
+                        times.append(int(time[0:2])*60+int(time[3:5]))
+                except IndexError:
+                    continue
+        return max(times)
+            
+
+    if cache and transcript_exists:
+        return
 
     # Remember output for each speaker.
     speakers = {}
@@ -77,8 +98,9 @@ def process(fname):
         text_per_speaker = ["\n".join(speakers[speaker]) for speaker in speakers.keys()]
         (length, rtext) = max([(len(text), text) for text in text_per_speaker])
 
-    with open(transcript_fname, "w") as f:
-        f.write(rtext)
+    if not transcript_exists and not args.force:
+        with open(transcript_fname, "w") as f:
+            f.write(rtext)
 
 
 def process_root(fname):
@@ -96,7 +118,34 @@ if __name__=="__main__":
     except FileExistsError:
         pass
     parser = argparse.ArgumentParser("Analyze DOCX transcript files from TranscribeMe!")
-    parser.add_argument("files",help="Files or directories to analyze",nargs="+")
+    parser.add_argument("files",help="Files or directories to analyze",nargs="*")
+    parser.add_argument("--force",help="force output",action='store_true')
+    parser.add_argument("--stats",help="Calculate stats",action='store_true')
     args = parser.parse_args()
-    for fname in args.files:
-        process_root(fname)
+    rets = []
+    
+    if args.stats:
+        for (label, files) in makecloud.SOURCES.items():
+            times = []
+            print("======================")
+            print("{}".format(label))
+            print("")
+            for fname in files:
+                seconds = process(fname)
+                print(seconds)
+                if seconds:
+                    times.append(seconds)
+            print(times)
+            print("   mean: {}  median: {}  stddev: {}".
+                  format(statistics.mean(times),statistics.median(times),statistics.stdev(times)))
+            mean = int(statistics.mean(times))
+            print("   mean: {}:{}".format(mean%60,mean//60))
+        exit(0)
+
+            
+        
+
+    for fname in args.files if args.files else makecloud.ALL_DOCX:
+        ret = process(fname)
+        rets.append(ret)
+

@@ -14,6 +14,21 @@ NIST_EXPERTS = glob.glob("transcripts/NIST Expert*/*.txt")
 NON_NIST_EXPERTS = glob.glob("transcripts/M*Expert*/*.txt")
 GENERAL = glob.glob("transcripts/*General*/*.txt")
 
+
+
+ALL_DOCX = glob.glob("transcripts/*/*.docx")
+ALL_EXPERTS_DOCX = glob.glob("transcripts/*Expert/*.docx")
+NIST_EXPERTS_DOCX = glob.glob("transcripts/NIST Expert*/*.docx")
+NON_NIST_EXPERTS_DOCX = glob.glob("transcripts/M*Expert*/*.docx")
+GENERAL_DOCX = glob.glob("transcripts/*General*/*.docx")
+
+
+SOURCES = {"expert_all": ALL_EXPERTS_DOCX,
+               "expert_nist": NIST_EXPERTS_DOCX,
+           "expert_non-nist": NON_NIST_EXPERTS_DOCX,
+               "general": GENERAL_DOCX
+           }
+
 TRANSCRIPTS = {"expert_all": ALL_EXPERTS,
                "expert_nist": NIST_EXPERTS,
                "expert_non-nist": NON_NIST_EXPERTS,

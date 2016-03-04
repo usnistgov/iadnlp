@@ -9,9 +9,31 @@ from nltk.stem.porter import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tokenize import MWETokenizer
 
+import statistics
+
 import makecloud
 
+def raw(fname):
+    return open(fname, "r").read().lower()
+
 if __name__ == "__main__":
+    # Print stats about the transcripts
+    for (label, files) in makecloud.TRANSCRIPTS.items():
+        print("======================")
+        print("{}".format(label))
+        print("")
+        # Calculate the number of
+        counts = []
+        for fname in files:
+            count = len(word_tokenize(raw(fname)))
+            print("{:15}: {:4}".format(fname,count))
+            counts.append(count)
+        print("   mean: {}  median: {}  stddev: {}".
+              format(statistics.mean(counts),statistics.median(counts),statistics.stdev(counts)))
+        print("\n")
+        
+    
+
     # Read the words of interest
     words = open("emotion_words.txt").read().lower().split("\n")
     sentiment_bag = set()
@@ -44,8 +66,7 @@ if __name__ == "__main__":
 
         for fname in files:
             scount = 0
-            raw = open(fname, "r").read().lower()
-            tokens = word_tokenize(raw)
+            tokens = word_tokenize(raw(fname))
             tokens = mwe_tokenizer.tokenize(tokens)
             tokens = list(filter(st.stem, tokens))
             bar = ""
